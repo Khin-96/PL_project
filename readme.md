@@ -1,26 +1,26 @@
 # Premier League Match Replay & Advanced Tactical Analytics Engine
 
-A professional-grade football match visualization and analysis system built with Python Arcade, transforming broadcast-quality tracking data into an interactive tactical intelligence platform.  Designed for coaches, analysts, journalists, and football enthusiasts who demand deeper insight than traditional highlight packages can provide.
+A professional-grade football match visualization and analysis system built with Python Arcade, transforming broadcast-quality tracking data into an interactive tactical intelligence platform.
 
 ## Executive Summary
 
-This project takes high-frequency player tracking data (10 frames per second, 54,000+ frames per match) and creates a fully interactive match replay experience with real-time analytics. You can scrub through any moment of a match, analyze player movements with sub-second precision, visualize tactical patterns, and compute advanced metrics that reveal the hidden narratives behind the scoreline.
+This project takes high-frequency player tracking data (10 frames per second, 54,000+ frames per match) and creates a fully interactive match replay experience with real-time analytics.  You can scrub through any moment of a match, isolate individual players, visualize tactical patterns, and compute advanced metrics on demand.
 
-Instead of watching passive highlights, you control temporal flow—pause at the exact moment a pressing trap is sprung, rewind to see how a counterattack developed through three phases of play, or fast-forward to the next goal while tracking defensive line collapse. Every frame contains complete spatial information for all 22 players plus the ball, enabling analyses that would be impossible with traditional broadcast footage.
+Instead of watching passive highlights, you control temporal flow—pause at the exact moment a pressing trap is sprung, rewind to see how a counterattack developed through three phases of play, or fast-forward through periods of low intensity to find the next critical sequence.
 
-This is not a video player with statistics overlaid. This is a simulation engine that reconstructs the match from pure coordinate data, allowing arbitrary camera angles, dynamic overlays, and computational analysis of any tactical concept you can formalize mathematically.
+This is not a video player with statistics overlaid.  This is a simulation engine that reconstructs the match from pure coordinate data, allowing arbitrary camera angles, dynamic overlays, and computational analysis impossible with traditional broadcast footage.
 
 ## The Vision
 
-Professional football clubs invest millions in analytics departments equipped with proprietary software and dedicated data scientists. This project democratizes that capability. Whether you're a coach preparing for next week's opponent, a journalist writing tactical breakdowns, a scout evaluating transfer targets, or a fan who wants to understand the game at a deeper level, this tool provides institutional-grade analysis capability without institutional budgets.
+Professional football clubs invest millions in analytics departments equipped with proprietary software and dedicated data scientists. This project democratizes that capability.  Whether you are a coach preparing for your next opponent, an analyst reviewing your team's performance, a scout evaluating transfer targets, or a journalist writing tactical breakdowns, this system provides the tools you need. 
 
-The system is designed around three philosophical principles: 
+The system is designed around three philosophical principles:
 
-1. **Separation of Data from Presentation**: Raw tracking data is immutable and stored efficiently.  All visualizations and metrics are computed dynamically, allowing new analytical methods to be applied retroactively to any previously-loaded match. 
+1. **Separation of Data from Presentation**: Raw tracking data is immutable and stored efficiently. All visualizations and metrics are computed dynamically, allowing new analytical methods to be applied to historical data without reprocessing.
 
 2. **Real-Time Interactivity**: Every control responds within a single frame.  Scrubbing through 90 minutes of match data feels like navigating a local video file, not querying a database.
 
-3. **Extensible Analytics**: The architecture anticipates future development. Adding a new visualization overlay, implementing a novel tactical metric, or integrating additional data sources requires minimal changes to existing code.
+3. **Extensible Analytics**: The architecture anticipates future development. Adding a new visualization overlay, implementing a novel tactical metric, or integrating additional data sources requires minimal changes to the existing codebase.
 
 ## System Architecture
 
@@ -62,17 +62,17 @@ graph TB
 
 ### Component Responsibilities
 
-**Data Layer**:  Responsible for loading raw files, validating data integrity, and building efficient access structures.  The frame cache converts JSONL (slow, repetitive parsing) to binary NumPy format (memory-mapped, instant access). The event index creates a temporal lookup table so "next goal" queries complete in constant time.
+**Data Layer**: Responsible for loading raw files, validating data integrity, and building efficient access structures.  The frame cache converts JSONL (slow, repetitive parsing) to binary NumPy format for 10-100x faster loading on subsequent runs.
 
-**Processing Layer**:  Transforms raw positional data into meaningful information.  Metrics calculator derives speed, acceleration, distance covered, and other kinematic properties. Spatial analyzer computes geometric relationships—nearest player to ball, convex hulls around team formations, Voronoi tessellations for pitch control. Game state manager maintains the current temporal position, selected entities, and active overlays, acting as the single source of truth for the presentation layer.
+**Processing Layer**: Transforms raw positional data into meaningful information.  Metrics calculator derives speed, acceleration, distance covered, and other kinematic properties.  Spatial analyzer computes geometric relationships (Voronoi diagrams, convex hulls, nearest neighbors). Game state manager maintains the current frame, selected players, active overlays, and other UI state.
 
-**Presentation Layer**:  Handles all rendering operations. Pitch renderer draws the field with accurate dimensions and markings. Player sprites are updated with positions from game state.  Overlay renderer manages computationally-expensive visualizations like heatmaps and pass networks. UI renderer displays telemetry panels, timeline scrubber, and control hints. 
+**Presentation Layer**:  Handles all rendering operations. Pitch renderer draws the field with accurate dimensions and markings. Player sprites are updated with positions from game state.  Overlay renderers draw heatmaps, pass networks, formations, and other tactical visualizations. UI renderer draws the timeline, telemetry panel, and control hints.
 
-**User Interaction**: Translates keyboard, mouse, and other input events into state changes. All user actions modify game state, which then propagates changes to the presentation layer. This unidirectional data flow prevents synchronization bugs and makes the system easier to reason about.
+**User Interaction**:  Translates keyboard, mouse, and other input events into state changes. All user actions modify game state, which then propagates changes to the presentation layer. This unidirectional data flow ensures consistency and makes debugging straightforward.
 
 ## Data Flow Architecture
 
-Understanding how information moves through the system is crucial for extending or modifying the codebase. 
+Understanding how information moves through the system is crucial for extending or modifying the codebase.
 
 ```mermaid
 sequenceDiagram
@@ -100,7 +100,7 @@ sequenceDiagram
     GameState-->>ArcadeWindow: Update all sprites
 ```
 
-This sequence diagram illustrates the critical distinction between user-initiated events (which can happen at any time) and the continuous frame update loop (which runs at fixed 60fps). The game state manager acts as the intermediary, preventing the presentation layer from directly accessing data sources.
+This sequence diagram illustrates the critical distinction between user-initiated events (which can happen at any time) and the continuous frame update loop (which runs at fixed 60fps). The game state acts as the single source of truth, mediating between user input and data retrieval.
 
 ## Feature Set
 
@@ -108,15 +108,15 @@ This sequence diagram illustrates the critical distinction between user-initiate
 
 The foundation is a frame-perfect replay engine that handles 54,000+ frames per match without lag or stuttering.  You get variable playback speeds (0.25x to 4x), instant seeking to any timestamp, and smooth interpolation between tracking data points.
 
-The system pre-loads a rolling window of 300 frames (30 seconds at 10fps source data) to ensure seeking is instantaneous. When you jump to a new section of the match, the background thread begins loading the next window while you're still watching the current one.  This predictive loading means you never wait for data. 
+The system pre-loads a rolling window of 300 frames (30 seconds at 10fps source data) to ensure seeking is instantaneous. When you jump to a new section of the match, the background thread begins loading the surrounding context while you continue analyzing the current moment.
 
-Frame interpolation uses cubic splines to generate intermediate positions between the 10fps tracking data and the 60fps display rate. This produces smooth, natural-looking movement without the stuttering that simple linear interpolation would create.  The interpolation is physically-aware—it respects momentum and doesn't allow instantaneous direction changes that would violate laws of motion.
+Frame interpolation uses cubic splines to generate intermediate positions between the 10fps tracking data and the 60fps display rate. This produces smooth, natural-looking movement without the stuttering characteristic of naive linear interpolation.
 
 ### Interactive Analysis Tools
 
-Click any player to lock onto them and see their complete match statistics—distance covered, top speed, current velocity, sprint count, time in possession, heat zones.  The system calculates these metrics in real-time from the raw coordinate stream, not from pre-computed summaries.  This means you can analyze any arbitrary time window:  "Show me player X's statistics between minute 23 and minute 31," and the system will compute the answer instantly.
+Click any player to lock onto them and see their complete match statistics—distance covered, top speed, current velocity, sprint count, time in possession, heat zones.  The system calculates these metrics on-demand from the raw tracking data, ensuring accuracy and allowing arbitrary time windows.
 
-When a player is selected, the view can optionally track them across the pitch, maintaining them in the center of the screen while other players and the ball move relative to their position. This player-locked camera mode is invaluable for analyzing off-ball movement and positional discipline.
+When a player is selected, the view can optionally track them across the pitch, maintaining them in the center of the screen while other players and the ball move relative to their position. This player-centric perspective reveals off-ball movement patterns invisible in broadcast footage.
 
 The telemetry panel displays: 
 - Current velocity (magnitude and direction vector)
@@ -129,36 +129,36 @@ The telemetry panel displays:
 
 ### Event Navigation
 
-Jump directly to key moments:  goals, shots, dangerous passes, defensive actions, fouls, substitutions.  The event index is pre-computed from SkillCorner's dynamic events CSV, giving you instant access to every meaningful play. 
+Jump directly to key moments:  goals, shots, dangerous passes, defensive actions, fouls, substitutions.  The event index is pre-computed from SkillCorner's dynamic events CSV, giving you instant access to match-defining sequences.
 
-Event navigation isn't just temporal jumping—it provides context. When you navigate to a goal, the system automatically displays a 15-second window:  10 seconds before the goal (to show buildup), the goal itself, and 5 seconds after (to show reactions and celebrations). You can customize these windows or disable auto-context if you prefer manual control.
+Event navigation is not just temporal jumping—it provides context.  When you navigate to a goal, the system automatically displays a 15-second window:  10 seconds before the goal (to show buildup), the goal itself, and 5 seconds after (to show celebration and restart).
 
-The event timeline shows a visual representation of match rhythm.  Dense clusters of events indicate high-intensity periods.  Long gaps reveal periods of low action or one-sided possession. Color-coding distinguishes event types: goals in gold, shots in red, dangerous passes in blue, defensive actions in gray. 
+The event timeline shows a visual representation of match rhythm.  Dense clusters of events indicate high-intensity periods.  Long gaps reveal periods of low action or one-sided possession. Color-coded markers distinguish event types at a glance.
 
-Advanced event filtering lets you query:  "Show me all progressive passes by player X in the attacking third that occurred when his team was losing." The system evaluates these compound conditions and presents matching events in temporal order.
+Advanced event filtering lets you query:  "Show me all progressive passes by player X in the attacking third that occurred when his team was losing." The system evaluates these compound conditions and returns a filtered event list, allowing focused analysis of specific tactical scenarios.
 
 ### Tactical Visualizations
 
-**Pass Networks**: Display the complete passing structure of a team during any phase of play.  Nodes represent players, edges represent passes, edge thickness indicates frequency, node size indicates pass volume. The network reveals team structure more clearly than any static formation diagram—you see who is actually connected to whom, not just nominal positions.
+**Pass Networks**: Display the complete passing structure of a team during any phase of play. Nodes represent players, edges represent passes, edge thickness indicates frequency, node size indicates pass volume. This reveals team structure, key connectors, and isolated players.
 
-Pass networks can be filtered by time window, pitch zone, game state (winning/losing/drawing), or pass type (forward/backward/lateral, short/medium/long). You can visualize a single sequence of possession or aggregate across the entire match.
+Pass networks can be filtered by time window, pitch zone, game state (winning/losing/drawing), or pass type (forward/backward/lateral, short/medium/long). You can visualize a single sequence of possession or aggregate an entire half to see overall patterns.
 
-**Pressure Maps**:  Visualize defensive intensity across different pitch zones. The system calculates pressure as a function of defender proximity, approach velocity, and numerical superiority. High-pressure zones are rendered in hot colors, safe zones in cool colors.  Pressure maps update in real-time as you scrub through the match, revealing how defensive intensity waxes and wanes with match state.
+**Pressure Maps**:  Visualize defensive intensity across different pitch zones. The system calculates pressure as a function of defender proximity, approach velocity, and numerical superiority. High-pressure zones appear as heat gradients, revealing where a team focuses their defensive efforts.
 
-**Movement Patterns**: Track off-ball runs and space creation.  When a player makes a run into space, the system can display their trajectory as a trail, color-coded by speed.  Overlaying multiple players' movement patterns reveals coordinated attacking schemes or defensive rotations that would be invisible in traditional broadcasts.
+**Movement Patterns**: Track off-ball runs and space creation. When a player makes a run into space, the system can display their trajectory as a trail, color-coded by speed. Overlaying multiple players reveals coordinated movement patterns and tactical synchronization.
 
-**Formation Analysis**: Automatic detection of team shapes and transitions. The system computes the convex hull of each team's outfield players and identifies their spatial distribution pattern. It recognizes standard formations (4-4-2, 4-3-3, 3-5-2, etc.) and detects transitions:  when a 4-4-2 becomes a 4-2-4 in possession, or when a 4-3-3 drops into a 5-4-1 out of possession.
+**Formation Analysis**: Automatic detection of team shapes and transitions. The system computes the convex hull of each team's outfield players and identifies their spatial distribution pattern. It recognizes common formations (4-4-2, 4-3-3, 3-5-2, etc.) and tracks transitions between them.
 
 Formation displays can show nominal positions (static) or actual positions (dynamic). The latter reveals how much freedom players have to roam and whether the team maintains its shape under pressure.
 
 ### Advanced Metrics
 
-The metrics engine computes statistics that aren't present in the raw data: 
+The metrics engine computes statistics that are not present in the raw data: 
 
 **Kinematic Metrics**:
 - Instantaneous speed and acceleration for every player at every frame
 - Cumulative distance covered with breakdowns by intensity zone
-- Sprint detection (threshold-based:  >24 km/h for >1 second)
+- Sprint detection (threshold-based:  greater than 24 km/h for more than 1 second)
 - Deceleration events (proxy for defensive engagement)
 - Direction changes (proxy for agility and responsiveness)
 
@@ -175,7 +175,7 @@ The metrics engine computes statistics that aren't present in the raw data:
 - Pressing triggers (conditions present when possession turns over)
 - Transition speed (time from loss to defensive shape restoration)
 
-These metrics are computed on-demand and cached.  The first time you request a metric for a time window, it computes.  Subsequent requests for the same window return cached results instantly.
+These metrics are computed on-demand and cached.  The first time you request a metric for a time window, it computes.  Subsequent requests for the same window return cached results instantly. 
 
 ### Spatial Analytics Engine
 
@@ -183,19 +183,19 @@ The spatial analyzer implements geometric algorithms for understanding team shap
 
 **Voronoi Diagrams**: Partition the pitch into regions based on which player can reach each point fastest. This provides a mathematical formalization of "who controls which space."
 
-**Convex Hulls**: The convex hull of a team's players describes the region they occupy. Changes in hull area indicate pressing (shrinking) or parking the bus (shrinking) vs. expansive play (growing).
+**Convex Hulls**: The convex hull of a team's players describes the region they occupy. Changes in hull area indicate pressing (shrinking) or parking the bus (shrinking) versus expansive play (growing).
 
 **Delaunay Triangulation**: The dual graph of the Voronoi diagram, revealing natural passing lanes and connectivity structure. 
 
 **K-Nearest Neighbors**: For any pitch location, identify the K nearest players and their team affiliations. This is the foundation of many advanced metrics (pressure, support options, etc.).
 
-**Pitch Control Models**: Probabilistic models that estimate the likelihood of each team winning the ball at each pitch location. These models incorporate player positions, velocities, and contextual factors (momentum, fatigue, skill).
+**Pitch Control Models**: Probabilistic models that estimate the likelihood of each team winning the ball at each pitch location. These models incorporate player positions, velocities, and contextual factors.
 
 ### Heatmap Generation
 
-Heatmaps aggregate player presence over time.  The pitch is divided into a grid (typically 20x15 cells), and each frame increments the counter for the cell containing the player. After aggregating over a time window, the result is normalized and rendered as a colored overlay. 
+Heatmaps aggregate player presence over time.  The pitch is divided into a grid (typically 20x15 cells), and each frame increments the counter for the cell containing the player. After aggregating over the desired time window, the result is normalized and rendered as a color gradient. 
 
-Heatmap generation is optimized:  we don't iterate through every frame naively.  Instead, we use NumPy's vectorized operations on the cached frame data, computing an entire heatmap in milliseconds even for thousand-frame windows. 
+Heatmap generation is optimized:  we do not iterate through every frame naively. Instead, we use NumPy's vectorized operations on the cached frame data, computing an entire heatmap in milliseconds even for multi-thousand frame windows. 
 
 Heatmaps can be generated for: 
 - Individual players (where does Player X spend his time?)
@@ -205,7 +205,7 @@ Heatmaps can be generated for:
 
 ## Installation & Setup
 
-This project requires Python 3.9 or higher. If you're running an older version, upgrade first to ensure compatibility with all dependencies.
+This project requires Python 3.9 or higher. If you are running an older version, upgrade first to ensure compatibility with all dependencies.
 
 ```bash
 # Clone the repository
@@ -223,9 +223,9 @@ pip install -r requirements. txt
 python scripts/download_sample_data.py
 ```
 
-The sample data script pulls select matches from SkillCorner's open dataset (A-League 2024/25 and European samples). If you have your own tracking data, place it in the `data/raw/` directory following the naming convention: 
+The sample data script pulls select matches from SkillCorner's open dataset (A-League 2024/25 and European samples). If you have your own tracking data, place it in the `data/raw/` directory following this naming convention:
 
-- Tracking data:  `{match_id}_tracking.jsonl`
+- Tracking data: `{match_id}_tracking.jsonl`
 - Event data: `{match_id}_events.csv`
 - Metadata: `{match_id}_metadata.json`
 
@@ -265,9 +265,9 @@ Once the window opens, you have full control over playback and analysis:
 - `4`: Set playback speed to 4x
 - `0`: Set playback speed to 0.25x (slow motion)
 - `R`: Restart from beginning
-- `←/→`: Skip backward/forward 5 seconds
-- `SHIFT + ←/→`: Frame-by-frame stepping (when paused)
-- `CTRL + ←/→`: Skip backward/forward 30 seconds
+- `LEFT/RIGHT`: Skip backward/forward 5 seconds
+- `SHIFT + LEFT/RIGHT`: Frame-by-frame stepping (when paused)
+- `CTRL + LEFT/RIGHT`: Skip backward/forward 30 seconds
 
 #### Event Navigation
 - `G`: Jump to next goal
@@ -323,7 +323,7 @@ PL_project/
 │   ├── game_state.py                # Manages current frame, selections, overlays
 │   │
 │   ├── data/
-│   │   ├── match_data.py            # Parses SkillCorner JSONL tracking files
+│   │   ├── match_data. py            # Parses SkillCorner JSONL tracking files
 │   │   ├── event_data.py            # Handles dynamic events CSV
 │   │   ├── metadata_loader.py       # Loads match metadata (teams, players, etc.)
 │   │   ├── data_cache.py            # Binary format conversion & caching
@@ -384,7 +384,7 @@ PL_project/
 ├── docs/
 │   ├── data_format.md               # SkillCorner format specification
 │   ├── coordinate_systems.md        # Detailed coord transform documentation
-│   ├── extending.md                 # How to add new features
+│   ├── extending. md                 # How to add new features
 │   ├── metrics_reference.md         # Complete list of available metrics
 │   ├── troubleshooting.md           # Common issues and solutions
 │   └── api_reference.md             # For developers extending the system
@@ -392,14 +392,14 @@ PL_project/
 ├── requirements.txt                 # Python dependencies
 ├── README.md                        # This file
 ├── LICENSE                          # MIT License
-└── .gitignore
+└── . gitignore
 ```
 
 ## Technical Deep Dive
 
 ### Coordinate System
 
-SkillCorner provides coordinates in meters from the center of the pitch.  The origin (0, 0) is at the center circle.  X ranges from -52. 5 to +52.5 (105m pitch length), Y ranges from -34 to +34 (68m pitch width). Positive X points toward one goal, negative X toward the other.  Positive Y is typically right side of pitch, negative Y is left. 
+SkillCorner provides coordinates in meters from the center of the pitch. The origin (0, 0) is at the center circle. X ranges from -52. 5 to +52.5 (105m pitch length), Y ranges from -34 to +34 (68m pitch width).
 
 We transform these to screen coordinates using: 
 
@@ -423,21 +423,21 @@ def to_meters(screen_x, screen_y):
     return x_meters, y_meters
 ```
 
-This transformation is handled in `coordinate_transform.py` and is the most critical piece of the rendering pipeline.  Get this wrong and players will appear off the pitch or movements will be distorted.  The test suite includes extensive validation to ensure pixel-perfect accuracy.
+This transformation is handled in `coordinate_transform.py` and is the most critical piece of the rendering pipeline.  Get this wrong and players will appear off the pitch or movements will be distorted.
 
 ### Performance Optimization
 
 With 22+ players updating at 60fps, we need to be smart about what we compute: 
 
-**Frame Cache**: Pre-load the next 300 frames into memory. When the user scrubs ahead, we're already prepared.  The cache uses memory-mapped NumPy arrays for instant access without loading entire datasets into RAM.
+**Frame Cache**: Pre-load the next 300 frames into memory. When the user scrubs ahead, we are already prepared.  The cache uses memory-mapped NumPy arrays for instant access without loading entire datasets into RAM.
 
-**Metric Memoization**: Speed calculations are cached.  We only recompute when the frame changes, not on every render pass.  The cache is keyed by (player_id, frame_number, metric_name), allowing instant retrieval.
+**Metric Memoization**: Speed calculations are cached.  We only recompute when the frame changes, not on every render pass. The cache is keyed by (player_id, frame_number, metric_name), allowing instant lookup.
 
 **Spatial Indexing**: Player sprites use Arcade's spatial hashing. When you click, we query nearby sprites instead of checking all 22. This reduces click detection from O(n) to O(1) for typical cases.
 
-**Overlay Rendering**:  Heatmaps and pass networks are expensive to draw. We render them to a texture once and reuse until the user changes the time window. This trades memory for GPU cycles and results in massive performance improvements.
+**Overlay Rendering**:  Heatmaps and pass networks are expensive to draw. We render them to a texture once and reuse until the user changes the time window. This trades memory for GPU cycles and results in dramatic performance improvements.
 
-**Vectorized Operations**: All metric calculations use NumPy vectorization.  Instead of looping through frames in Python, we operate on entire arrays at once. This achieves near-C performance for numerical operations.
+**Vectorized Operations**: All metric calculations use NumPy vectorization. Instead of looping through frames in Python, we operate on entire arrays at once. This achieves near-C performance for numerical operations.
 
 **Background Threading**: Data loading and preprocessing happen on background threads. The main thread is reserved exclusively for rendering and input handling, ensuring the UI never freezes.
 
@@ -468,7 +468,7 @@ Simple linear interpolation produces robotic movement. We use cubic Hermite spli
 - Physically plausible trajectories (no sharp corners)
 - Temporal consistency (player at t=0.5s is halfway between t=0s and t=1s positions)
 
-The interpolation respects the Nyquist criterion:  we never generate motion artifacts that weren't present in the source data. 
+The interpolation respects the Nyquist criterion:  we never generate motion artifacts that were not present in the source data.
 
 ## Data Sources
 
@@ -477,7 +477,7 @@ This project uses SkillCorner's open dataset, which includes:
 - **A-League 2024/25**:  Full season tracking data with complete coverage
 - **European samples**: Select matches from Premier League, La Liga, Bundesliga, Serie A
 
-The data is licensed under Creative Commons Attribution 4.0 and is free for non-commercial use.  If you want to use this system with proprietary data (Opta, StatsBomb, Wyscout, etc.), you'll need to write a custom parser for the data layer, but the rest of the system is format-agnostic.
+The data is licensed under Creative Commons Attribution 4.0 and is free for non-commercial use.  If you want to use this system with proprietary data (Opta, StatsBomb, Wyscout, etc.), you will need to write a custom data parser matching your provider's format.
 
 ### Data Format Specifications
 
@@ -491,13 +491,12 @@ SkillCorner tracking data is provided as JSONL (JSON Lines), with one JSON objec
   "ball":  {"x": 12.3, "y": -4.5, "z": 0.1},
   "players": [
     {"id": 123, "team": "home", "x": 10.5, "y": -3.2},
-    {"id": 456, "team": "away", "x": 15.2, "y": 2.1},
-    ... 
+    {"id": 456, "team": "away", "x": 15.2, "y": 2.1}
   ]
 }
 ```
 
-Event data is provided as CSV with columns:
+Event data is provided as CSV with columns: 
 ```
 frame,timestamp,event_type,player_id,team,x,y,details
 ```
@@ -510,8 +509,8 @@ Measured on a mid-range laptop (Intel i5-1135G7, 16GB RAM, Intel Iris Xe integra
 
 - **Load time for 90-minute match**: 2.3 seconds (cold cache), 0.4 seconds (warm cache)
 - **Average FPS during playback**: 58-60fps (capped at monitor refresh rate)
-- **Memory usage**: ~400MB per match loaded
-- **Seeking to arbitrary frame**: <50ms (typically 15-20ms)
+- **Memory usage**:  Approximately 400MB per match loaded
+- **Seeking to arbitrary frame**: Less than 50ms (typically 15-20ms)
 - **Heatmap generation**: 8ms for 1000-frame window
 - **Pass network computation**: 12ms for full match
 - **Metric calculation**: 3ms per player per time window
@@ -522,28 +521,28 @@ On a high-end system (AMD Ryzen 9, 32GB RAM, NVIDIA RTX 3070), the system sustai
 
 ## Known Limitations
 
-This is a tool for analysis, not real-time tracking. If you need to process live match data as it arrives, the architecture would need modification—specifically, the assumption that all data is pre-loaded and immutable would need to be relaxed.
+This is a tool for analysis, not real-time tracking. If you need to process live match data as it arrives, the architecture would need modification—specifically, the assumption that all data is pre-loaded would need to be relaxed.
 
-Some SkillCorner data has gaps—players who are substituted off, go off-camera, or are temporarily occluded. The current system interpolates through short gaps (<1 second) but will show players disappearing for longer absences.  Future versions will implement more sophisticated gap-filling using team motion models.
+Some SkillCorner data has gaps—players who are substituted off, go off-camera, or are temporarily occluded. The current system interpolates through short gaps (less than 1 second) but will show players disappearing and reappearing for longer occlusions.
 
-Advanced metrics like expected possession value, pass completion probability, or action value require additional training data and machine learning models that are not yet implemented. The foundation is here, but building those models is a separate research project.
+Advanced metrics like expected possession value, pass completion probability, or action value require additional training data and machine learning models that are not yet implemented.  The foundation for these is in place, but the models themselves need development.
 
-The system currently handles only 2D tracking data. If you have 3D data (including player heights and ball Z-coordinates for aerial play), the rendering pipeline would need extension to support isometric or perspective views. 
+The system currently handles only 2D tracking data. If you have 3D data (including player heights and ball Z-coordinates for aerial play), the rendering pipeline would need extension to support isometric or perspective projection. 
 
-Automatic event detection (goals, shots, passes) relies on heuristics and is not as accurate as human-annotated events. For critical analysis, use the provided SkillCorner event data rather than algorithmic detection.
+Automatic event detection (goals, shots, passes) relies on heuristics and is not as accurate as human-annotated events. For critical analysis, use the provided SkillCorner event data rather than algorithmically detected events.
 
 ## Extending the System
 
 ### Adding a New Visualization
 
-Let's say you want to add a "passing lanes" overlay that shows available pass options for the player on the ball:
+Let's say you want to add a "passing lanes" overlay that shows available pass options for the player on the ball: 
 
 1. Create `src/rendering/passing_lanes_renderer.py`
 2. Implement a `draw_passing_lanes(game_state, player_id)` function
 3. Register it in `overlay_renderer.py`'s render cycle
 4. Add a keyboard toggle in `arcade_replay.py`'s key handler
 
-Example implementation: 
+Example implementation:
 
 ```python
 # src/rendering/passing_lanes_renderer.py
@@ -561,7 +560,7 @@ def draw_passing_lanes(game_state, player_id):
         max_distance=30.0
     )
     
-    for target_id, probability in passing_options: 
+    for target_id, probability in passing_options:  
         target_pos = current_frame.get_player_position(target_id)
         
         # Draw line with alpha based on pass probability
@@ -572,7 +571,7 @@ def draw_passing_lanes(game_state, player_id):
         )
 ```
 
-The system is designed for this kind of extension. New overlays don't need to know about data loading or coordinate transforms—they just receive a `GameState` object with everything they need. 
+The system is designed for this kind of extension. New overlays do not need to know about data loading or coordinate transforms—they just receive a `GameState` object with everything they need. 
 
 ### Adding a New Metric
 
@@ -585,7 +584,7 @@ Suppose you want to calculate "progressive passes" (passes that move the ball si
 Example implementation:
 
 ```python
-# src/analytics/metrics_calculator.py
+# src/analytics/metrics_calculator. py
 def calculate_progressive_passes(match_data, player_id):
     """Calculate number of progressive passes (>10m toward goal)."""
     passes = match_data.get_passes_by_player(player_id)
@@ -624,7 +623,7 @@ The rest of the system is format-agnostic and will work with any data source tha
 Load your next opponent's recent matches and analyze their tactical patterns: 
 - How high is their defensive line?
 - When do they trigger their press?
-- Which players roam vs. hold position?
+- Which players roam versus hold position?
 - What are their set-piece routines?
 
 Create annotated clips showing specific scenarios you want your team to exploit. 
@@ -635,7 +634,7 @@ Review your own team's match:
 - Which players covered the most ground?
 - Did we maintain our shape when under pressure?
 - Were there gaps in our defensive structure that opponents exploited? 
-- How effective was our pressing?
+- How effective was our pressing? 
 
 Export metrics to CSV for integration with training load monitoring systems.
 
@@ -644,7 +643,7 @@ Export metrics to CSV for integration with training load monitoring systems.
 Evaluate transfer targets:
 - How does this midfielder perform under pressure?
 - Does this defender maintain good positioning?
-- Is this striker's movement creating space for others?
+- Is this striker's movement creating space for others? 
 - How consistent is this player's performance across matches?
 
 Generate comprehensive reports with visualizations and quantitative metrics.
@@ -671,7 +670,7 @@ The system provides programmatic access to all data and metrics for batch proces
 
 ## Contributing
 
-This project is open source and community-driven. If you add a feature, fix a bug, or improve performance, please open a pull request. Some areas that need work:
+This project is open source and community-driven. If you add a feature, fix a bug, or improve performance, please open a pull request.  Some areas that need work:
 
 **High Priority**:
 - Better interpolation algorithms for smooth player movement during rapid direction changes
@@ -740,7 +739,7 @@ black src/
 
 MIT License
 
-Copyright (c) 2025 Khin-96
+Copyright (c) 2025 Hinzano
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -761,24 +760,21 @@ Built on the shoulders of giants:
 
 Special thanks to the football analytics community on Twitter, Reddit's r/footballtactics, and various Discord servers for feedback, suggestions, and inspiration.
 
-## Contact & Community
+## Contact
 
 Questions, ideas, or want to talk tactics? 
 
 - **GitHub Issues**: For bug reports and feature requests
 - **GitHub Discussions**: For questions and general discussion
-- **Twitter**: @Khin96_Analytics
-- **Email**: khin96. analytics@gmail.com
-
-Join the community Discord for real-time discussion:  [discord.gg/football-analytics](#)
+- **Email**: hinzanno@gmail.com
 
 ## Citation
 
 If you use this tool in academic research, please cite:
 
 ```bibtex
-@software{khin2025plreplay,
-  author = {Khin-96},
+@software{hinzano2025plreplay,
+  author = {Hinzano},
   title = {Premier League Match Replay & Advanced Tactical Analytics Engine},
   year = {2025},
   url = {https://github.com/Khin-96/PL_project},
@@ -788,29 +784,27 @@ If you use this tool in academic research, please cite:
 
 ## Frequently Asked Questions
 
-**Q: Can I use this with data from my own amateur team?**
+**Q: Can I use this with data from my own amateur team?**  
 A: Yes, if you can get tracking data in a compatible format. Many modern camera systems (Veo, Trace, Playermaker) can export position data that can be adapted to work with this system.
 
-**Q:  Does this work with women's football data?**
+**Q: Does this work with women's football data?**  
 A: Absolutely.  The system is gender-agnostic and works with any football tracking data. 
 
-**Q: Can I analyze futsal or indoor football?**
-A: Yes, you'll just need to adjust the pitch dimensions in `config.py`.
+**Q: Can I analyze futsal or indoor football?**  
+A: Yes, you will just need to adjust the pitch dimensions in `config.py`.
 
-**Q: How much Python knowledge do I need to use this?**
-A: None for basic usage (just run the provided scripts). Intermediate Python skills for customization.  Advanced skills for extending with new features.
+**Q: How much Python knowledge do I need to use this?**  
+A:  None for basic usage (just run the provided scripts). Intermediate Python skills for customization.  Advanced skills for extending with new features.
 
-**Q: Can I use this commercially?**
-A: The software itself is MIT licensed (free for commercial use), but check the license of your data source. SkillCorner's open data is non-commercial only.
+**Q: Can I use this commercially?**  
+A: The software itself is MIT licensed (free for commercial use), but check the license of your data source.  SkillCorner's open data is non-commercial only.
 
-**Q: Will this run on a Chromebook/tablet/phone?**
+**Q: Will this run on a Chromebook/tablet/phone?**  
 A: Currently requires a full Python environment. A web version is planned for version 2.0.
 
-**Q: How do I report a bug?**
+**Q: How do I report a bug?**  
 A: Open an issue on GitHub with:  system specs, error message, steps to reproduce, and any relevant data files (if sharable).
 
 ---
 
 **Version 1.1.0** | Built with passion for the beautiful game | December 2025
-
-This is the foundation.  The plan is to keep building—more visualizations, deeper analytics, better performance, wider accessibility.  Football is infinite in its complexity.  This tool is just the beginning of understanding it properly.

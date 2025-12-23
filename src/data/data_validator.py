@@ -1,5 +1,5 @@
 """
-Data validation and integrity checking.
+Data validation and integrity checking
 
 Validates tracking data completeness, consistency, and correctness.
 Provides detailed error reporting for data issues.
