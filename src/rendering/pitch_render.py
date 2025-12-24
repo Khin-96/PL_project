@@ -3,16 +3,17 @@ Pitch rendering utilities for drawing a realistic football pitch.
 """
 
 import arcade
+from arcade import draw
 from typing import Tuple
 
-from ..utils.config import (
+from utils.config import (
     PITCH_COLOR,
     PITCH_LINE_COLOR,
     PITCH_LINE_WIDTH,
     PITCH_LENGTH,
     PITCH_WIDTH
 )
-from ..utils.coordinate_transform import get_transformer
+from utils.coordinates_transform import get_transformer
 
 
 class PitchRenderer:
@@ -32,22 +33,22 @@ class PitchRenderer:
     def draw(self):
         """Draw the complete pitch with all markings."""
         # Draw grass background
-        arcade.draw_rectangle_filled(
-            self.center_x,
-            self.center_y,
+        arcade.draw_lbwh_rectangle_filled(
+            self.left,
+            self.bottom,
             self.width,
             self.height,
             PITCH_COLOR
         )
         
         # Draw pitch outline
-        arcade.draw_rectangle_outline(
-            self.center_x,
-            self.center_y,
+        arcade.draw_lbwh_rectangle_outline(
+            self.left,
+            self.bottom,
             self.width,
             self.height,
             PITCH_LINE_COLOR,
-            border_width=PITCH_LINE_WIDTH
+            PITCH_LINE_WIDTH
         )
         
         # Draw halfway line
@@ -67,7 +68,7 @@ class PitchRenderer:
             self.center_y,
             center_circle_radius,
             PITCH_LINE_COLOR,
-            border_width=PITCH_LINE_WIDTH
+            PITCH_LINE_WIDTH
         )
         
         # Draw center spot
@@ -101,18 +102,18 @@ class PitchRenderer:
         width = self.transformer.distance_to_pixels(40.3)
         
         if left_side:
-            x_center = self.left + depth / 2
+            x_left = self.left
         else:
-            x_center = self.right - depth / 2
+            x_left = self.right - depth
         
         # Draw penalty area rectangle
-        arcade.draw_rectangle_outline(
-            x_center,
-            self.center_y,
+        arcade.draw_lbwh_rectangle_outline(
+            x_left,
+            self.center_y - width / 2,
             depth,
             width,
             PITCH_LINE_COLOR,
-            border_width=PITCH_LINE_WIDTH
+            PITCH_LINE_WIDTH
         )
         
         # Draw penalty spot (11m from goal line)
@@ -146,7 +147,7 @@ class PitchRenderer:
             PITCH_LINE_COLOR,
             start_angle,
             end_angle,
-            border_width=PITCH_LINE_WIDTH
+            PITCH_LINE_WIDTH
         )
     
     def _draw_goal_area(self, left_side: bool):
@@ -161,17 +162,17 @@ class PitchRenderer:
         width = self.transformer.distance_to_pixels(18.3)
         
         if left_side:
-            x_center = self.left + depth / 2
+            x_left = self.left
         else:
-            x_center = self.right - depth / 2
+            x_left = self.right - depth
         
-        arcade.draw_rectangle_outline(
-            x_center,
-            self.center_y,
+        arcade.draw_lbwh_rectangle_outline(
+            x_left,
+            self.center_y - width / 2,
             depth,
             width,
             PITCH_LINE_COLOR,
-            border_width=PITCH_LINE_WIDTH
+            PITCH_LINE_WIDTH
         )
     
     def _draw_corner_arcs(self):
@@ -187,7 +188,7 @@ class PitchRenderer:
             PITCH_LINE_COLOR,
             0,
             90,
-            border_width=PITCH_LINE_WIDTH
+            PITCH_LINE_WIDTH
         )
         
         # Top-left corner
@@ -199,7 +200,7 @@ class PitchRenderer:
             PITCH_LINE_COLOR,
             270,
             360,
-            border_width=PITCH_LINE_WIDTH
+            PITCH_LINE_WIDTH
         )
         
         # Bottom-right corner
@@ -211,7 +212,7 @@ class PitchRenderer:
             PITCH_LINE_COLOR,
             90,
             180,
-            border_width=PITCH_LINE_WIDTH
+            PITCH_LINE_WIDTH
         )
         
         # Top-right corner
@@ -223,5 +224,5 @@ class PitchRenderer:
             PITCH_LINE_COLOR,
             180,
             270,
-            border_width=PITCH_LINE_WIDTH
+            PITCH_LINE_WIDTH
         )

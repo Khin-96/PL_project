@@ -2,9 +2,13 @@
 Entry point for the Premier League Match Replay & Analytics Engine.
 """
 
+import arcade
 import argparse
 import sys
 from pathlib import Path
+
+# Add src directory to path
+sys.path.insert(0, str(Path(__file__).parent))
 
 from arcade_replay import MatchReplayWindow
 from utils.config import FPS_TARGET

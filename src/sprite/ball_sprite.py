@@ -39,7 +39,7 @@ class BallSprite(arcade.Sprite):
     def _create_sprite(self) -> None:
         """Create ball texture."""
         # Create a simple white circle texture
-        texture = arcade.Texture.create_filled(
+        texture = arcade.texture.Texture.create_filled(
             f"ball_{self.radius}",
             (int(self.radius * 2), int(self.radius * 2)),
             self.color

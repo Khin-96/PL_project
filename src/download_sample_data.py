@@ -16,16 +16,19 @@ from src.utils.config import RAW_DATA_DIR
 
 
 # SkillCorner open data repository
-SKILLCORNER_BASE_URL = "https://raw.githubusercontent.com/SkillCorner/opendata/master/"
+# Using media URL for Git LFS files
+SKILLCORNER_BASE_URL = "https://media.githubusercontent.com/media/SkillCorner/opendata/master/data/matches/"
 
-# Sample matches to download
+# Sample matches to download (using actual match IDs from SkillCorner open dataset)
+# Check https://github.com/SkillCorner/opendata/tree/master/data/matches for available matches
 SAMPLE_MATCHES = [
     {
-        'id': '4039225',
-        'description': 'A-League 2024/25 Sample Match',
+        'id': '2017461',
+        'description': 'A-League Sample Match',
         'files': [
-            'match_data/4039225_match.json',
-            'match_data/4039225_tracking_extrapolated.jsonl'
+            '2017461/2017461_match.json',
+            '2017461/2017461_tracking_extrapolated.jsonl',
+            '2017461/2017461_dynamic_events.csv'
         ]
     }
 ]
@@ -44,6 +47,16 @@ def download_file(url: str, destination: Path) -> bool:
     """
     try:
         print(f"  Downloading: {url}")
+        
+        # For JSONL files (large, stored in Git LFS), use media URL
+        # For other files (small), use raw URL
+        if url.endswith('.jsonl'):
+            # Already using media URL from base
+            pass
+        else:
+            # Switch to raw URL for small files
+            url = url.replace('media.githubusercontent.com/media/', 'raw.githubusercontent.com/')
+        
         response = requests.get(url, stream=True, timeout=30)
         response.raise_for_status()
         

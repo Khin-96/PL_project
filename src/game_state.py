@@ -5,8 +5,8 @@ Central game state manager that coordinates all components of the replay system.
 from typing import Optional, List, Dict
 from dataclasses import dataclass
 
-from .data.match_data import MatchDataLoader, MatchFrame
-from .utils.config import PLAYBACK_SPEEDS, DEFAULT_PLAYBACK_SPEED, DATA_FPS
+from data.match_data import MatchDataLoader, MatchFrame
+from utils.config import PLAYBACK_SPEEDS, DEFAULT_PLAYBACK_SPEED, DATA_FPS
 
 
 @dataclass

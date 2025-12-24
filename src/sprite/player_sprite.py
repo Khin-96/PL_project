@@ -3,10 +3,11 @@ Player sprite implementation for rendering and managing individual players.
 """
 
 import arcade
+from arcade import draw
 from typing import Tuple, Optional
 from collections import deque
 
-from ..utils.config import (
+from utils.config import (
     PLAYER_RADIUS,
     HOME_TEAM_COLOR,
     AWAY_TEAM_COLOR,
@@ -14,7 +15,7 @@ from ..utils.config import (
     SELECTED_PLAYER_RING_WIDTH,
     SPEED_SMOOTHING_WINDOW
 )
-from ..utils.coordinate_transform import calculate_speed
+from utils.coordinates_transform import calculate_speed
 
 
 class PlayerSprite(arcade.Sprite):
@@ -105,7 +106,7 @@ class PlayerSprite(arcade.Sprite):
     def draw(self):
         """Custom draw method to render player as a colored circle."""
         # Draw main player circle
-        arcade.draw_circle_filled(
+        draw.draw_circle_filled(
             self.center_x,
             self.center_y,
             self.radius,
@@ -113,7 +114,7 @@ class PlayerSprite(arcade.Sprite):
         )
         
         # Draw jersey number
-        arcade.draw_text(
+        draw.draw_text(
             str(self.jersey_number),
             self.center_x,
             self.center_y - 4,
@@ -126,7 +127,7 @@ class PlayerSprite(arcade.Sprite):
         
         # Draw selection ring if selected
         if self.is_selected:
-            arcade.draw_circle_outline(
+            draw.draw_circle_outline(
                 self.center_x,
                 self.center_y,
                 self.radius + SELECTED_PLAYER_RING_WIDTH,
@@ -191,7 +192,7 @@ class BallSprite(arcade.Sprite):
         self.center_y = y
         self.z = 0.0  # Height above ground
         
-        from ..utils.config import BALL_RADIUS, BALL_COLOR
+        from utils.config import BALL_RADIUS, BALL_COLOR
         self.radius = BALL_RADIUS
         self.color = BALL_COLOR
         
@@ -212,7 +213,7 @@ class BallSprite(arcade.Sprite):
         # Draw shadow if ball is in the air
         if self.z > 0.1:
             shadow_alpha = max(50, min(200, int(255 - self.z * 20)))
-            arcade.draw_circle_filled(
+            draw.draw_circle_filled(
                 self.center_x,
                 self.center_y - (self.z * 2),  # Shadow offset
                 self.radius * 1.5,
@@ -220,7 +221,7 @@ class BallSprite(arcade.Sprite):
             )
         
         # Draw ball
-        arcade.draw_circle_filled(
+        draw.draw_circle_filled(
             self.center_x,
             self.center_y + (self.z * 2),  # Elevation effect
             self.radius,
@@ -228,7 +229,7 @@ class BallSprite(arcade.Sprite):
         )
         
         # Draw highlight for 3D effect
-        arcade.draw_circle_filled(
+        draw.draw_circle_filled(
             self.center_x - self.radius * 0.3,
             self.center_y + (self.z * 2) + self.radius * 0.3,
             self.radius * 0.4,

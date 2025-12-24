@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 from dataclasses import dataclass
 
-from ..utils.config import RAW_DATA_DIR, PROCESSED_DATA_DIR, DATA_FPS
+from utils.config import RAW_DATA_DIR, PROCESSED_DATA_DIR, DATA_FPS
 
 
 @dataclass
@@ -133,14 +133,30 @@ class MatchDataLoader:
             MatchFrame object or None if invalid
         """
         try:
-            timestamp = data.get('timestamp', frame_id / DATA_FPS)
+            # Parse timestamp - handle None, string timestamps, or numeric values
+            raw_timestamp = data.get('timestamp')
+            if raw_timestamp is None:
+                timestamp = frame_id / DATA_FPS
+            elif isinstance(raw_timestamp, str):
+                # Handle string timestamps like '00:00:00.00'
+                # Convert HH:MM:SS.MS to seconds
+                parts = raw_timestamp.split(':')
+                if len(parts) == 3:
+                    hours = float(parts[0])
+                    minutes = float(parts[1])
+                    seconds = float(parts[2])
+                    timestamp = hours * 3600 + minutes * 60 + seconds
+                else:
+                    timestamp = frame_id / DATA_FPS
+            else:
+                timestamp = float(raw_timestamp)
             
             # Parse player positions
             players = []
-            for player_data in data.get('data', []):
-                if player_data.get('group_name') == 'player':
+            for player_data in data.get('player_data', []):
+                if isinstance(player_data, dict):
                     player = PlayerFrame(
-                        player_id=player_data.get('trackable_object'),
+                        player_id=player_data.get('player_id'),
                         team_id=player_data.get('team_id', 0),
                         jersey_number=player_data.get('jersey_number', 0),
                         x=player_data.get('x', 0.0),
@@ -151,15 +167,14 @@ class MatchDataLoader:
             
             # Parse ball position
             ball = None
-            for obj_data in data.get('data', []):
-                if obj_data.get('group_name') == 'ball':
-                    ball = BallFrame(
-                        x=obj_data.get('x', 0.0),
-                        y=obj_data.get('y', 0.0),
-                        z=obj_data.get('z', 0.0),
-                        timestamp=timestamp
-                    )
-                    break
+            ball_data = data.get('ball_data', {})
+            if isinstance(ball_data, dict) and ('x' in ball_data or 'y' in ball_data):
+                ball = BallFrame(
+                    x=ball_data.get('x', 0.0),
+                    y=ball_data.get('y', 0.0),
+                    z=ball_data.get('z', 0.0),
+                    timestamp=timestamp
+                )
             
             return MatchFrame(
                 frame_id=frame_id,

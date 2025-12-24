@@ -3,13 +3,14 @@ Main Arcade window and game loop for the Premier League Replay system.
 """
 
 import arcade
+from arcade import draw
 from typing import Dict, Optional
 
-from .game_state import GameState
-from .rendering.pitch_renderer import PitchRenderer
-from .sprites.player_sprite import PlayerSprite, BallSprite
-from .utils.coordinate_transform import get_transformer
-from .utils.config import (
+from game_state import GameState
+from rendering.pitch_render import PitchRenderer
+from sprite.player_sprite import PlayerSprite, BallSprite
+from utils.coordinates_transform import get_transformer
+from utils.config import (
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
     WINDOW_TITLE,
@@ -83,6 +84,10 @@ class MatchReplayWindow(arcade.Window):
         current_player_ids = set()
         
         for player in frame.players:
+            # Skip players with missing IDs
+            if player.player_id is None:
+                continue
+            
             current_player_ids.add(player.player_id)
             
             # Convert to screen coordinates
@@ -181,9 +186,9 @@ class MatchReplayWindow(arcade.Window):
         timeline_y = TIMELINE_MARGIN
         timeline_width = WINDOW_WIDTH - (2 * TIMELINE_MARGIN)
         
-        arcade.draw_rectangle_filled(
-            WINDOW_WIDTH / 2,
-            timeline_y + TIMELINE_HEIGHT / 2,
+        arcade.draw_lbwh_rectangle_filled(
+            TIMELINE_MARGIN,
+            timeline_y,
             timeline_width,
             TIMELINE_HEIGHT,
             UI_BACKGROUND_COLOR
@@ -191,9 +196,9 @@ class MatchReplayWindow(arcade.Window):
         
         # Progress bar
         progress = self.game_state.get_progress_percentage() / 100.0
-        arcade.draw_rectangle_filled(
-            TIMELINE_MARGIN + (timeline_width * progress / 2),
-            timeline_y + TIMELINE_HEIGHT / 2,
+        arcade.draw_lbwh_rectangle_filled(
+            TIMELINE_MARGIN,
+            timeline_y,
             timeline_width * progress,
             TIMELINE_HEIGHT - 10,
             arcade.color.RED
@@ -227,14 +232,15 @@ class MatchReplayWindow(arcade.Window):
             return
         
         # Panel background
-        panel_x = WINDOW_WIDTH - TELEMETRY_PANEL_WIDTH / 2
-        panel_y = WINDOW_HEIGHT / 2
+        panel_left = WINDOW_WIDTH - TELEMETRY_PANEL_WIDTH
+        panel_top = WINDOW_HEIGHT - 200
+        panel_height = WINDOW_HEIGHT - 200
         
-        arcade.draw_rectangle_filled(
-            panel_x,
-            panel_y,
+        arcade.draw_lbwh_rectangle_filled(
+            panel_left,
+            WINDOW_HEIGHT - panel_height,
             TELEMETRY_PANEL_WIDTH,
-            WINDOW_HEIGHT - 200,
+            panel_height,
             UI_BACKGROUND_COLOR
         )
         
@@ -278,7 +284,7 @@ class MatchReplayWindow(arcade.Window):
         help_text = [
             "CONTROLS:",
             "SPACE - Pause/Play",
-            "1-4 - Playback Speed",
+            "1-5 - Playback Speed",
             "R - Restart",
             "← → - Skip 5s",
             "T - Toggle Timeline",
